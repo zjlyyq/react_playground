@@ -195,3 +195,150 @@ var domContainer = document.querySelector("#like_button_container");
 ReactDOM.render(e(LikeButton), domContainer);
 ```
 
+### 核心概念
+
+#### JSX
+
+##### 为什么使用JSX？
+
+React认为渲染逻辑和其他的UI逻辑内在耦合。
+
+React没有采用传统的将标记和逻辑分离到不同文件的做法，而是将二者共同放在称之为“组件”的松散耦合单元之中，来实现[关注点分离]([https://baike.baidu.com/item/%E5%85%B3%E6%B3%A8%E7%82%B9%E5%88%86%E7%A6%BB](https://baike.baidu.com/item/关注点分离))。
+
+如果还不能理解适应在 JS 中使用标记语言，以下这个油管视频应该可以说服你。
+
+<div>
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/x7cQ3mrcKaY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+React [不强制要求](https://zh-hans.reactjs.org/docs/react-without-jsx.html)使用 JSX，但是大多数人发现，在 JavaScript 代码中将 JSX 和 UI 放在一起时，会在视觉上有辅助作用。它还可以使 React 显示更多有用的错误和警告消息。
+
+##### 在 JSX 中嵌入表达式
+
+在下面的例子中，我们声明了一个名为 `name` 的变量，然后在 JSX 中使用它，并将它包裹在大括号中：
+
+```jsx
+const name = 'Josh Perez';
+const element = <h1>Hello, {name}</h1>;
+
+ReactDOM.render(
+  element,
+  document.getElementById('root')
+);
+```
+
+> babel怎么解析jsx，怎么识别出何处是jsx代码？
+
+为了便于阅读，我们会将 JSX 拆分为多行。同时，我们建议将内容包裹在括号中，虽然这样做不是强制要求的，但是这可以避免遇到[自动插入分号](http://stackoverflow.com/q/2846283)陷阱。
+
+例如:
+
+```jsx
+function formatName(user) {
+  return user.firstName + ' ' + user.lastName;
+}
+
+const user = {
+  firstName: 'Harper',
+  lastName: 'Perez'
+};
+// 将内容包裹在括号中
+const element = (
+  <h1>
+    Hello, {formatName(user)}!
+  </h1>
+);
+
+ReactDOM.render(
+  element,
+  document.getElementById('root')
+);
+```
+
+##### JSX 也是一个表达式
+
+<span style="color:red;font-weight:bolder;">在编译之后，JSX 表达式会被转为普通 JavaScript 函数调用，并且对其取值后得到 JavaScript 对象。</span>也就是说，你可以在 `if` 语句和 `for` 循环的代码块中使用 JSX，将 JSX 赋值给变量，把 JSX 当作参数传入，以及从函数中返回 JSX：
+
+```jsx
+function getGreeting(user) {
+  if (user) {
+    return <h1>Hello, {formatName(user)}!</h1>;
+  }
+  return <h1>Hello, Stranger.</h1>;
+}
+```
+
+##### JSX 特定属性
+
+你可以通过使用引号，来将属性值指定为字符串字面量：
+
+```jsx
+const element = <div tabIndex="0"></div>;
+```
+
+也可以使用大括号，来在属性值中插入一个 JavaScript 表达式：
+
+```jsx
+const element = <img src={user.avatarUrl}></img>;
+```
+
+##### 使用 JSX 指定子元素
+
+假如一个标签里面没有内容，你可以使用 `/>` 来闭合标签，就像 XML 语法一样：
+
+```jsx
+var img = <img src={config.backgroundImageSrc}></img>;
+var img2 = <img src={config.backgroundImageSrc} />
+```
+
+##### JSX 防止[注入攻击]([https://baike.baidu.com/item/SQL%E6%B3%A8%E5%85%A5%E6%94%BB%E5%87%BB](https://baike.baidu.com/item/SQL注入攻击))
+
+你可以安全地在 JSX 当中插入用户输入内容：
+
+```
+const title = response.potentiallyMaliciousInput;
+// 直接使用是安全的：
+const element = <h1>{title}</h1>;
+```
+
+React DOM 在渲染所有输入内容之前，默认会进行[转义](https://stackoverflow.com/questions/7381974/which-characters-need-to-be-escaped-on-html)。它可以确保在你的应用中，永远不会注入那些并非自己明确编写的内容。所有的内容在渲染之前都被转换成了字符串。这样可以有效地防止 [XSS（cross-site-scripting, 跨站脚本）](https://en.wikipedia.org/wiki/Cross-site_scripting)攻击。
+
+##### JSX 表示对象
+
+Babel 会把 JSX 转译成一个名为 `React.createElement()` 函数调用。
+
+以下两种示例代码完全等效：
+
+```jsx
+const element = (
+  <h1 className="greeting">
+    Hello, world!
+  </h1>
+);
+```
+
+```jsx
+const element = React.createElement(
+  'h1',
+  {className: 'greeting'},
+  'Hello, world!'
+);
+```
+
+`React.createElement()` 会预先执行一些检查，以帮助你编写无错代码，但实际上它创建了一个这样的对象：
+
+```jsx
+// 注意：这是简化过的结构
+const element = {
+  type: 'h1',
+  props: {
+    className: 'greeting',
+    children: 'Hello, world!'
+  }
+};
+```
+
+这些对象被称为 <span style="color:red;font-weight:bolder;">“React 元素”</span>。它们描述了你希望在屏幕上看到的内容。React 通过读取这些对象，然后使用它们来构建 DOM 以及保持随时更新。
+
+
+

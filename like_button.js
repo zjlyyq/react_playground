@@ -9,6 +9,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
+var config = {
+    backgroundImageSrc: 'http://localhost:3001/root/imgs/1.jpg'
+};
 
 var LikeButton = function (_React$Component) {
     _inherits(LikeButton, _React$Component);
@@ -36,17 +39,24 @@ var LikeButton = function (_React$Component) {
             //   { onClick: () => this.setState({ liked: true }) },
             //   'Like'
             // );
+
             // 使用jsx
-            return React.createElement(
-                "button",
-                {
-                    onClick: function onClick() {
-                        _this2.setState({ liked: true });
-                        window.open('http://localhost:3000/');
-                    }
-                },
-                "Like"
-            );
+            var jsxes = [];
+            for (var i = 0; i < 3; i++) {
+                jsxes.push(React.createElement(
+                    "button",
+                    {
+                        onClick: function onClick() {
+                            _this2.setState({ liked: true });
+                            window.open('http://localhost:3000/');
+                        }
+                    },
+                    "Like"
+                ));
+            }
+            var img = React.createElement("img", { src: config.backgroundImageSrc });
+            jsxes.push(img);
+            return jsxes;
         }
     }]);
 
