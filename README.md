@@ -398,3 +398,128 @@ setInterval(tick, 1000);
 ##### React 只更新它需要更新的部分
 
 React DOM 会将元素和它的子元素与它们之前的状态进行比较，并只会进行必要的更新来使 DOM 达到预期的状态。
+
+#### 组件 & Props
+
+> 组件允许你将 UI 拆分为独立可复用的代码片段，并对每个片段进行独立构思。本指南旨在介绍组件的相关理念。
+
+组件，从概念上类似于 JavaScript 函数。它接受任意的入参（即 “props”），并返回用于描述页面展示内容的 **React 元素**。
+
+##### 函数组件与 class 组件
+
+定义组件最简单的方式就是编写 JavaScript 函数：
+
+```js
+function Welcome(props) {
+  return <h1>Hello, {props.name}</h1>;
+}
+```
+
+你同时还可以使用 [ES6 的 class](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes) 来定义组件：
+
+```
+class 
+```
+
+##### 渲染组件
+
+之前，我们遇到的 React 元素都只是 DOM 标签：
+
+```jsx
+const element = <div />;
+```
+
+<div>
+    <p style="color:red;">
+        不过，React 元素也可以是用户自定义的组件：
+    </p>
+</div>
+
+```jsx
+const element = <Welcome name="Sara" />;
+```
+
+```react
+function Welcome(props) {
+    return <h1>Hello, {props.name}</h1>;
+}
+const domContainer = document.querySelector("#like_button_container");
+ReactDOM.render(<Welcome name="zjl"/>, domContainer);
+```
+
+当 React 元素为用户自定义组件时，它会将 JSX 所接收的属性（attributes）以及**子组件（children）**转换为单个对象传递给组件，这个对象被称之为 “props”。
+
+> 组件如何嵌套？？？
+
+回顾一下这个例子中发生了什么：
+
+1. 我们调用 `ReactDOM.render()` 函数，并传入 `<Welcome name="zjl"/>` 作为参数。
+2. React 调用 `Welcome` 组件，并将 `{name: 'zjl'}` 作为 props 传入。
+3. `Welcome` 组件将 `Hello, zjl`元素作为返回值。
+4. React DOM 将 DOM 高效地更新为 `Hello, zjl`。
+
+> **注意：** 组件名称必须以大写字母开头。
+>
+> React 会将以小写字母开头的组件视为原生 DOM 标签。例如，`` 代表 HTML 的 div 标签，而 `` 则代表一个组件，并且需在作用域内使用 `Welcome`。
+>
+> 你可以在[深入 JSX](https://zh-hans.reactjs.org/docs/jsx-in-depth.html#user-defined-components-must-be-capitalized)中了解更多关于此规范的原因。
+
+##### 组合组件
+
+组件可以在其输出中引用其他组件。
+
+```react
+
+function Timeer(props) {
+    var now = new Date()
+    return (
+        <p>Now is  {now.getDate()}</p>
+    )
+}
+function Welcome(props) {
+    return (
+        <div>
+            <h1>Hello, {props.name}</h1>
+            <Timeer />
+        </div>
+    );
+}
+const domContainer = document.querySelector("#like_button_container");
+ReactDOM.render(
+    <Welcome name="zjl" />,
+    domContainer);
+```
+
+##### 拆分组件
+
+将组件拆分为更小的组件。
+
+提取组件可能是一件繁重的工作，但是，在大型应用中，构建可复用组件库是完全值得的。根据经验来看，如果 UI 中有一部分被多次使用（`Button`，`Panel`，`Avatar`），或者组件本身就足够复杂（`App`，`FeedStory`，`Comment`），那么它就是一个可复用组件的候选项。
+
+##### Props 的只读性
+
+组件无论是使用[函数声明还是通过 class 声明](https://zh-hans.reactjs.org/docs/components-and-props.html#function-and-class-components)，都决不能修改自身的 props。来看下这个 `sum` 函数：
+
+```js
+function sum(a, b) {
+  return a + b;
+}
+```
+
+这样的函数被称为[“纯函数”](https://en.wikipedia.org/wiki/Pure_function)，因为该函数不会尝试更改入参，且多次调用下相同的入参始终返回相同的结果。
+
+相反，下面这个函数则不是纯函数，因为它更改了自己的入参：
+
+```js
+function withdraw(account, amount) {
+  account.total -= amount;
+}
+```
+
+React 非常灵活，但它也有一个严格的规则：
+
+**所有 React 组件都必须像纯函数一样保护它们的 props 不被更改。**
+
+当然，应用程序的 UI 是动态的，并会伴随着时间的推移而变化。在下一章节中，我们将介绍一种新的概念，称之为 “state”。在不违反上述规则的情况下，state 允许 React 组件随用户操作、网络响应或者其他变化而动态更改输出内容。
+
+> React 的Props 的只读性和Vue的父子组件间的传值类似，父组件传递给子组件的props同样无法在子组件更改，而是必须通过子组件emit一个事件通知父组件去更改。
