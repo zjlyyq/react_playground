@@ -665,10 +665,270 @@ setInterval(tick, 1000);
         ReactDOM.render(<Clock  />, domContainer);
     }
 
-    setInterval(tick, 1000);
+    tick()
 ```
 
 这些方法叫“生命周期方法”。
 
 `componentDidMount` 方法在组件被渲染到 `DOM` 后执行。
 
+> 观察上面的代码，知道自己对作用域的理解还不够到位。
+>
+> ```js
+>  var interval = setInterval(function() {
+>  	_this.state.date = new Date();
+>  },1000)
+> ```
+>
+> 这里 `internal` 是局部变量，无法在 `componentWillUnmount` 中获取。需要改成全局变量。
+>
+> ```diff
+> +   interval = null;
+> 
+>     componentDidMount() {
+>         var _this = this;
+> -       var interval = setInterval(function() {
+> +       interval = setInterval(function() {
+>             _this.state.date = new Date();
+>         },1000)
+>     }
+> ```
+>
+> 另一个需要注意的点是：ES6的class内部貌似并不能出现 `var` 声明变量。
+>
+> <div style="text-align:center;">
+>     <img src="./static/imgs/es6_class.png">
+> </div>
+>
+> 
+
+进化版本：将定时器示例作为组件`state`的内部变量
+
+```react
+class Clock extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { date: new Date() };
+    }
+    componentDidMount() {
+        this.state.interval = setInterval(
+            () => {
+                this.state.date = new Date();
+            },
+            1000
+        )
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.state.interval)
+    }
+
+    render() {
+        return (
+            <div>
+                <h1>Hello World!</h1>
+                <h2>It is {this.state.date.toLocaleTimeString()}</h2>
+            </div>
+        )
+    }
+}
+
+function tick() {
+    const domContainer = document.querySelector("#like_button_container");
+    ReactDOM.render(<Clock />, domContainer);
+}
+tick()
+```
+
+最后是安装官网建议修改的最终版；
+
+```react
+class Clock extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { date: new Date() };
+    }
+    componentDidMount() {
+        this.interval = setInterval(
+            () => {
+                this.setState({
+                    date: new Date()
+                })
+            },
+            1000
+        )
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.interval)
+    }
+
+    render() {
+        return (
+            <div>
+                <h1>Hello World!</h1>
+                <h2>It is {this.state.date.toLocaleTimeString()}</h2>
+            </div>
+        )
+    }
+}
+
+function tick() {
+    const domContainer = document.querySelector("#like_button_container");
+    ReactDOM.render(<Clock />, domContainer);
+}
+tick()
+```
+
+> 修改点主要有两个地方：
+>
+> 1. `state` 的状态改变通过内置的 `setState` 函数
+> 2. 计时器实例直接挂在`this`下，而不是`this.state`（尽管 `this.props` 和 `this.state` 是 React 本身设置的，且都拥有特殊的含义，但是其实你可以向 class 中随意添加不参与数据流（比如计时器 ID）的额外字段。）
+
+观察上面这个例子，不妨思考下程序执行过程。
+
+组件`Clock`内部函数被调用次序：`constructor` --> `render` --> `componentWillUnmount` --(state changed)--> `render` --> `componentWillUnmount`。
+
+1. 首先`<Clock />`被传递给**ReactDOM.render**，`constructor` 构造函数被率先调用，初始化了组件实例的`state`。
+2. 组件`render`函数被调用，返回了React元素，告诉React应该在根元素中渲染的DOM。随后ReactDOM渲染页面。
+3. 组件被渲染到DOM后，`componentDidMount`函数被执行，创建定时器。
+4. 定时器更新了state后，React会重新调用组件的`render`函数，重新返回新的React元素。ReactDOM重新渲染组件。
+5. 组件被移除后，`componentWillUnmount`函数被调用，清除定时器。
+
+
+
+官网解释也差不多：
+
+<div style="text-align:center;">
+    <img src="./static/imgs/React lift cycle.png">
+</div>
+
+##### 正确地使用 State
+
+遗留疑惑：为什么 `state` 的状态改变通过内置的 `setState` 函数？
+
+关于 `setState()` 你应该了解三件事：
+
+1. 不要直接修改 State
+
+   ```react
+   this.state.date = new Date();   //上述例子不会重新渲染
+   ```
+
+   而是应该使用 `setState()`:
+
+   ```react
+   this.setState({
+   	date: new Date()
+   })
+   ```
+
+   **构造函数是唯一可以给 `this.state` 赋值的地方。**
+
+2. State 的更新可能是异步的
+
+   出于性能考虑，React 可能会把多个 `setState()` 调用合并成一个调用。
+
+   因为 `this.props` 和 `this.state` 可能会异步更新，所以你不要依赖他们的值来更新下一个状态。
+
+   例如，此代码可能会无法更新计数器：
+
+   ```react
+   // Wrong
+   this.setState({
+     counter: this.state.counter + this.props.increment,
+   });
+   ```
+
+   要解决这个问题，可以让 `setState()` 接收一个函数而不是一个对象。这个函数用上一个 state 作为第一个参数，将此次更新被应用时的 props 做为第二个参数：
+
+   ```react
+   // Correct
+   this.setState((state, props) => ({
+     counter: state.counter + props.increment
+   }));
+   ```
+
+   上面使用了[箭头函数](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions)，不过使用普通的函数也同样可以：
+
+   ```react
+   // Correct
+   this.setState(function(state, props) {
+     return {
+       counter: state.counter + props.increment
+     };
+   });
+   ```
+
+3. State 的更新会被合并
+
+   当你调用 `setState()` 的时候，React 会把你提供的对象合并到当前的 state。
+
+   例如，你的 state 包含几个独立的变量：
+
+   ```react
+   constructor(props) {
+       super(props);
+       this.state = {
+         posts: [],
+         comments: []
+       };
+   }
+   ```
+
+   然后你可以分别调用 `setState()` 来单独地更新它们：
+
+   ```react
+   componentDidMount() {
+       fetchPosts().then(response => {
+         this.setState({
+           posts: response.posts
+         });
+       });
+   
+       fetchComments().then(response => {
+         this.setState({
+           comments: response.comments
+         });
+       });
+   }
+   ```
+
+   这里的合并是浅合并，所以 `this.setState({comments})` 完整保留了 `this.state.posts`， 但是完全替换了 `this.state.comments`。
+
+   > 友好的设计：否则每一个setState语句内就必须包含所有变量，否则没列出的变量就被覆盖了，那确实难以想象。
+
+##### 数据是向下流动的
+
+不管是父组件或是子组件都无法知道某个组件是有状态的还是无状态的，并且它们也并不关心它是函数组件还是 class 组件。
+
+这就是为什么称 state 为局部的或是封装的的原因。除了拥有并设置了它的组件，其他组件都无法访问。
+
+组件可以选择把它的 state 作为 props 向下传递到它的子组件中, 但是子组件本身无法知道其`props`接收到的参数是来自于 父组件的`state`或是 父组件 的 props，还是手动输入的。
+
+这通常会被叫做“自上而下”或是“单向”的数据流。任何的 state 总是所属于特定的组件，而且从该 state 派生的任何数据或 UI 只能影响树中“低于”它们的组件。
+
+如果你把一个以组件构成的树想象成一个 props 的数据瀑布的话，那么每一个组件的 state 就像是在任意一点上给瀑布增加额外的水源，但是它只能向下流动。
+
+为了证明每个组件都是真正独立的，我们可以创建一个渲染三个 `Clock` 的 `App` 组件：
+
+```
+function App() {
+  return (
+    <div>
+      <Clock />
+      <Clock />
+      <Clock />
+    </div>
+  );
+}
+
+ReactDOM.render(
+  <App />,
+  document.getElementById('root')
+);
+```
+
+每个 `Clock` 组件都会单独设置它自己的计时器并且更新它。
+
+在 React 应用中，组件是有状态组件还是无状态组件属于组件实现的细节，它可能会随着时间的推移而改变。你可以在有状态的组件中使用无状态的组件，反之亦然。

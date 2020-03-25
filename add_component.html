@@ -15,6 +15,7 @@
         <h2>Add React to a Website</h2>
         <p>Add a React Button to you existing page.</p>
         <div id="like_button_container"></div>
+        <button onclick="changeCompnent()"> replace ☝this component</button>
         <!-- Load React. -->
         <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
         <script
@@ -35,6 +36,15 @@
         <script>
             var frame_obj = document.getElementsByTagName('iframe')[0].contentWindow;
             console.log(frame_obj.window);
+        </script>
+        <script>
+            function changeCompnent(){
+                console.log('button is clicked!!!');
+                var script=document.createElement('script');
+                script.type="text/javascript";
+                script.src = "http://localhost:3001/react/welcome.js";
+                document.body.appendChild(script);
+            }
         </script>
     </body>
 </html>

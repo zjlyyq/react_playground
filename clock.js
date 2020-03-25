@@ -12,27 +12,28 @@ var Clock = function (_React$Component) {
     function Clock(props) {
         _classCallCheck(this, Clock);
 
-        var _this2 = _possibleConstructorReturn(this, (Clock.__proto__ || Object.getPrototypeOf(Clock)).call(this, props));
+        var _this = _possibleConstructorReturn(this, (Clock.__proto__ || Object.getPrototypeOf(Clock)).call(this, props));
 
-        _this2.state = { date: new Date() };
-        return _this2;
+        _this.state = { date: new Date() };
+        return _this;
     }
 
     _createClass(Clock, [{
         key: "componentDidMount",
         value: function componentDidMount() {
-            var _this = this;
-            var interval = setInterval(function () {
-                _this.state.date = new Date();
+            var _this2 = this;
+
+            this.interval = setInterval(function () {
+                _this2.setState({
+                    date: new Date()
+                });
             }, 1000);
         }
     }, {
         key: "componentWillUnmount",
         value: function componentWillUnmount() {
-            if (interval) {
-                console.log('interval exisiting');
-                clearInterval(interval);
-            }
+            console.log('clock is removed');
+            clearInterval(this.interval);
         }
     }, {
         key: "render",
@@ -58,9 +59,17 @@ var Clock = function (_React$Component) {
     return Clock;
 }(React.Component);
 
+function App() {
+    return React.createElement(
+        "div",
+        null,
+        React.createElement(Clock, null),
+        React.createElement(Clock, null),
+        React.createElement(Clock, null)
+    );
+}
 function tick() {
     var domContainer = document.querySelector("#like_button_container");
-    ReactDOM.render(React.createElement(Clock, null), domContainer);
+    ReactDOM.render(React.createElement(App, null), domContainer);
 }
-
-setInterval(tick, 1000);
+tick();
