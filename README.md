@@ -523,3 +523,152 @@ React 非常灵活，但它也有一个严格的规则：
 当然，应用程序的 UI 是动态的，并会伴随着时间的推移而变化。在下一章节中，我们将介绍一种新的概念，称之为 “state”。在不违反上述规则的情况下，state 允许 React 组件随用户操作、网络响应或者其他变化而动态更改输出内容。
 
 > React 的Props 的只读性和Vue的父子组件间的传值类似，父组件传递给子组件的props同样无法在子组件更改，而是必须通过子组件emit一个事件通知父组件去更改。
+
+#### state & 生命周期
+
+通过封装一个真正可复用的 `Clock` 组件。它将设置自己的计时器并每秒更新一次。
+
+````react
+function Clock(props) {
+    return (
+        <div>
+            <h1>Hello World!</h1>
+            <h2>It is {props.date.toLocaleTimeString()}</h2>
+        </div>
+    )
+}
+
+function tick(){
+    const domContainer = document.querySelector("#like_button_container");
+    ReactDOM.render(<Clock date={new Date()}/>, domContainer);
+}
+
+setInterval(tick, 1000);
+````
+
+以上例子忽略了一个关键的技术细节：`Clock` 组件需要设置一个计时器，并且需要每秒更新 UI。
+
+理想情况下，我们希望只编写一次代码，便可以让 `Clock` 组件自我更新：
+
+我们需要在 `Clock` 组件中添加 “state” 来实现这个功能。
+
+**State 与 props 类似，但是 state 是私有的，并且完全受控于当前组件。**
+
+##### 将函数组件转换成 class 组件
+
+通过以下五步将 `Clock` 的函数组件转成 class 组件：
+
+1. 创建一个同名的 [ES6 class](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes)，并且继承于 `React.Component`。
+2. 添加一个空的 `render()` 方法。
+3. 将函数体移动到 `render()` 方法之中。
+4. 在 `render()` 方法中使用 `this.props` 替换 `props`。
+5. 删除剩余的空函数声明。
+
+```diff
+- function Clock(props) {
+-     return (
+-         <div>
+-             <h1>Hello World!</h1>
+-             <h2>It is {props.date.toLocaleTimeString()}</h2>
+-         </div>
+-     )
+- }
++ class Clock extends React.Component {
++     render() {
++         return (
++             <div>
++                 <h1>Hello World!</h1>
++                 <h2>It is {this.props.date.toLocaleTimeString()}</h2>
++             </div>
++         )
++     }
++ }
+
+  function tick() {
+      const domContainer = document.querySelector("#like_button_container");
+      ReactDOM.render(<Clock date={new Date()} />, domContainer);
+  }
+
+  setInterval(tick, 1000);
+```
+现在 Clock 组件被定义为 class，而不是函数。
+
+每次组件更新时 `render` 方法都会被调用，但只要在相同的 DOM 节点中渲染 <Clock /> ，就仅有一个 Clock 组件的 class 实例被创建使用。这就使得我们可以使用如 state 或生命周期方法等很多其他特性。
+##### 向 class 组件中添加局部的 state
+```diff
+  class Clock extends React.Component {
++     constructor(props) {
++         super(props);
++         this.state = {date:new Date()};
++     }
+      render() {
+          return (
+              <div>
+                  <h1>Hello World!</h1>
++                 <h2>It is {this.state.date.toLocaleTimeString()}</h2>
+-                 <h2>It is {this.props.date.toLocaleTimeString()}</h2>
+              </div>
+          )
+      }
+  }
+
+  function tick() {
+      const domContainer = document.querySelector("#like_button_container");
+-     ReactDOM.render(<Clock date={new Date()} />, domContainer);
++     ReactDOM.render(<Clock  />, domContainer);
+  }
+
+  setInterval(tick, 1000);
+```
+##### 将生命周期方法添加到 Class 中
+在具有许多组件的应用程序中，当组件被销毁时释放所占用的资源是非常重要的。
+
+当 `Clock` 组件第一次被渲染到 DOM 中的时候，就为其设置一个计时器。这在 React 中被称为“挂载（mount）”。
+
+同时，当 DOM 中 `Clock` 组件被删除的时候，应该[清除计时器](https://developer.mozilla.org/en-US/docs/Web/API/WindowTimers/clearInterval)。这在 React 中被称为“卸载（unmount）”。
+
+我们可以为 class 组件声明一些特殊的方法，当组件挂载或卸载时就会去执行这些方法：
+
+```diff
+    class Clock extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {date:new Date()};
+        }
+
++       componentDidMount() {
++           var _this = this;
++           var interval = setInterval(function() {
++               _this.state.date = new Date();
++           },1000)
++       }
++
++       componentWillUnmount() {
++           if (interval) {
++               console.log('interval exisiting')
++               clearInterval(interval)
++           }
++       }
+
+        render() {
+            return (
+                <div>
+                    <h1>Hello World!</h1>
+                    <h2>It is {this.state.date.toLocaleTimeString()}</h2>
+                </div>
+            )
+        }
+    }
+
+    function tick() {
+        const domContainer = document.querySelector("#like_button_container");
+        ReactDOM.render(<Clock  />, domContainer);
+    }
+
+    setInterval(tick, 1000);
+```
+
+这些方法叫“生命周期方法”。
+
+`componentDidMount` 方法在组件被渲染到 `DOM` 后执行。
+
