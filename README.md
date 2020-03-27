@@ -975,3 +975,94 @@ ReactDOM.render(
 );
 ```
 
+#### 列表 & Key
+
+返回一个`p`列表。
+
+```jsx
+function PeopleInfo(props) {
+
+    const p_list = props.peoples.map(people => {
+        return <p>{people.name}</p>
+    })
+    console.log(p_list);
+
+    return p_list;
+}
+
+const peoples = [
+    {
+        name: 'zjl'
+    },
+    {
+        name: 'yyq'
+    }
+]
+
+const domContainer = document.querySelector("#like_button_container");
+ReactDOM.render(<PeopleInfo peoples={peoples} />, domContainer)
+```
+
+> 这样渲染出来浏览器会报告警告⚠️Warning: Each child in a list should have a unique "key" prop. 
+
+为列表中的每个元素分配一个 `key`
+
+```react
+function PeopleInfo(props) {
+
+    const p_list = props.peoples.map(people => {
+        return <p key={people.id}>{people.name}</p>
+    })
+    console.log(p_list);
+    
+    return p_list;
+}
+
+const peoples = [
+    {
+        id: 1,
+        name: 'zjl'
+    },
+    {
+        id: 2,
+        name: 'yyq'
+    }
+]
+
+const domContainer = document.querySelector("#like_button_container");
+ReactDOM.render(<PeopleInfo peoples={peoples} />, domContainer)
+```
+
+##### key
+
+key 帮助 React 识别哪些元素改变了，比如被添加或删除。因此你应当给数组中的每一个元素赋予一个确定的标识。
+
+一个元素的 key 最好是这个元素在列表中拥有的一个独一无二的字符串。通常，我们使用数据中的 id 来作为元素的 key。
+
+当元素没有确定 id 的时候，万不得已你可以使用元素索引 index 作为 key。
+
+```jsx
+const todoItems = todos.map((todo, index) =>
+  // Only do this if items have no stable IDs
+  <li key={index}>
+    {todo.text}
+  </li>
+);
+```
+
+如果列表项目的顺序可能会变化，我们不建议使用索引来用作 key 值，因为这样做会导致性能变差，还可能引起组件状态的问题。
+
+> 这个问题不只是在`react`中才存在，在一些其他框架中也存在类似现象，例如：`VueJs`
+
+##### 用 key 提取组件
+
+元素的 key 只有放在就近的数组上下文中才有意义。
+
+一个好的经验法则是：在 `map()` 方法中的元素需要设置 key 属性。
+
+##### key 只是在兄弟节点之间必须唯一
+
+数组元素中使用的 key 在其兄弟节点之间应该是独一无二的。然而，它们不需要是全局唯一的。当我们生成两个不同的数组时，我们可以使用相同的 key 值。
+
+key 会传递信息给 React ，但不会传递给你的组件。如果你的组件中需要使用 `key` 属性的值，请用其他属性名显式传递这个值。
+
